@@ -17,7 +17,33 @@ export interface ApiResponse {
   errorData: any;
   errorCodeStr: string | null;
 }
+// 在 src/types/index.ts 中添加
+export interface WearItem {
+  itemId: string;
+  tag: string;
+  tagZh: string;
+  tagEn: string;
+  marketHashName: string;
+  sellPrice: number;
+  surviveNum: string;
+  updateTime: string;
+}
 
+export interface CategoryItem {
+  itemId: string;
+  tag: string;
+  tagZh: string;
+  tagEn: string;
+  marketHashName: string;
+  sellPrice: number;
+  surviveNum: string;
+  updateTime: string;
+}
+
+export interface SkinWearDetailResponse {
+  relatedList: WearItem[];
+  categoryList: CategoryItem[];
+}
 export interface PriceData {
   platform: string;
   platformItemId: string;

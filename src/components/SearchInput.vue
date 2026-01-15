@@ -18,7 +18,7 @@
     <div v-if="showDropdown && filteredItems.length > 0" class="dropdown">
       <div class="dropdown-content">
         <div
-          v-for="item in filteredItems.slice(0, 8)"
+          v-for="item in filteredItems.slice(0, 20)"
           :key="item.marketHashName"
           class="dropdown-item"
           @mousedown="selectItem(item)"

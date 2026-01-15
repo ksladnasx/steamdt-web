@@ -13,6 +13,7 @@ export interface ContentJsonData {
 // API 配置
 export const API_CONFIG = {
   BASE: '/api', // 使用代理
+  MoreInfoBASE:'/moreinfo',
   TOKEN: 'Bearer 04a77f47d70a47809ce4006c553494f2',
   TIMEOUT: 10000 // 10秒超时
 }
@@ -91,6 +92,41 @@ export async function getSkinAvgPrice(marketHashName: string): Promise<AvgPriceR
     }
   } catch (error) {
     console.error('获取饰品均价失败:', error)
+    throw error
+  }
+}
+
+//获取饰品其他磨损的价格
+export async function getMoreSkinPrices(marketHashName: string): Promise<any> {
+  try {
+    const timestamp = Date.now();
+    const url = `${API_CONFIG.MoreInfoBASE}/sale-wear-detail?timestamp=${timestamp}`
+    //发送post请求
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': API_CONFIG.TOKEN,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify({ 
+        "appId": 730,
+        marketHashName: marketHashName
+       })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    
+    if (data.success) {
+      return data.data
+    } else {
+      throw new Error(data.errorMsg || '查询其他磨损价格失败')
+    }
+  } catch (error) {
+    console.error('获取其他磨损价格失败:', error)
     throw error
   }
 }

@@ -16,6 +16,11 @@ export default defineConfig({
         target: 'https://open.steamdt.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/open')
+      },
+      '/moreinfo': {
+        target: 'https://api.steamdt.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/moreinfo/, 'user/skin/v1')
       }
     }
   }
