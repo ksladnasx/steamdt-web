@@ -71,7 +71,7 @@ const selectItem = (item: SkinItem) => {
   query.value = item.name
   showDropdown.value = false
   emit('select', item)
-  
+  query.value = ''
   if (blurTimer) {
     clearTimeout(blurTimer)
   }

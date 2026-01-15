@@ -1,12 +1,24 @@
 <template>
     <div class="price-display-container">
+        <!-- 7日均价卡片 -->
+        <div v-if="avgPriceData" class="avg-price-section">
+            <div class="section-header">
+                <h3 class="section-title">7日平台均价</h3>
+                <div class="avg-price">
+                    平均：¥{{ formatPrice(avgPriceData.avgPrice) }}
+                </div>
+            </div>
+            <div class="avg-grid">
+                <div v-for="item in avgPriceData.dataList" :key="item.platform" class="avg-card">
+                    <div class="avg-platform">{{ item.platform }}</div>
+                    <div class="avg-price-value">¥{{ formatPrice(item.avgPrice) }}</div>
+                </div>
+            </div>
+        </div>
         <!-- 实时价格表格 -->
         <div v-if="priceData" class="price-section">
             <div class="section-header">
                 <h3 class="section-title">实时价格</h3>
-                <div class="update-time">
-                    <!-- 更新时间：{{ formatTime(priceData[0]?.updateTime) }} -->
-                </div>
             </div>
             <div class="table-container">
                 <table class="price-table">
@@ -21,7 +33,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="item in filteredPriceData" :key="item.platform" >
+                        <tr v-for="item in filteredPriceData" :key="item.platform">
                             <td class="platform-cell">
                                 <span class="platform-badge">{{ item.platform }}</span>
                             </td>
@@ -52,21 +64,7 @@
             </div>
         </div>
 
-        <!-- 7日均价卡片 -->
-        <div v-if="avgPriceData" class="avg-price-section">
-            <div class="section-header">
-                <h3 class="section-title">7日平台均价</h3>
-                <div class="avg-price">
-                    平均：¥{{ formatPrice(avgPriceData.avgPrice) }}
-                </div>
-            </div>
-            <div class="avg-grid">
-                <div v-for="item in avgPriceData.dataList" :key="item.platform" class="avg-card">
-                    <div class="avg-platform">{{ item.platform }}</div>
-                    <div class="avg-price-value">¥{{ formatPrice(item.avgPrice) }}</div>
-                </div>
-            </div>
-        </div>
+
     </div>
 </template>
 
@@ -82,16 +80,11 @@ const props = defineProps<{
 const formatPrice = (price: number) => {
     if (price === 0) return '0.00'
     return price.toFixed(2)
-} 
-//过滤掉售价为0的数据
-const filteredPriceData = computed(()=>{
+}
+
+const filteredPriceData = computed(() => {
     return props.priceData?.filter(item => item.sellPrice !== 0);
 })
-
-const formatTime = (timestamp: number) => {
-    if (!timestamp) return '-'
-    return new Date(timestamp * 1000).toLocaleString('zh-CN')
-}
 
 const formatRelativeTime = (timestamp: number) => {
     if (!timestamp) return '-'
@@ -229,7 +222,7 @@ const formatRelativeTime = (timestamp: number) => {
 
 .avg-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 16px;
 }
 
