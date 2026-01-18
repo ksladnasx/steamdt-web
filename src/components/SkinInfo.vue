@@ -5,78 +5,103 @@
       <div class="card-header">
         <h3 class="card-title">饰品信息</h3>
         <div v-if="itemDetail?.analysisTags?.length" class="analysis-tags-mini">
-          <div 
-            v-for="(tag, index) in itemDetail.analysisTags.slice(0, 2)" 
-            :key="index"
-            class="analysis-tag-mini"
-            :style="{ backgroundColor: tag.background }"
-          >
+          <div v-for="(tag, index) in itemDetail.analysisTags" :key="index" :style="{ backgroundColor: getTransparentColor(tag.background) }"
+            class="analysis-tag-mini">
             <span v-html="tag.style"></span>
           </div>
         </div>
       </div>
-      
+
       <div class="info-grid">
         <!-- 基础信息 -->
         <div class="info-item">
           <span class="info-label">中文名称</span>
           <span class="info-value">{{ skin.name }}</span>
         </div>
-        
+
         <div class="info-item">
           <span class="info-label">英文名称</span>
           <span class="info-value code">{{ skin.marketHashName }}</span>
         </div>
-        
+
         <div v-if="itemDetail?.shortName" class="info-item">
           <span class="info-label">简称</span>
           <span class="info-value">{{ itemDetail.shortName }}</span>
         </div>
-        
+
         <div v-if="itemDetail?.itemType" class="info-item">
           <span class="info-label">武器类型</span>
           <span class="info-value">{{ formatItemType(itemDetail.itemType) }}</span>
         </div>
-        
+
         <!-- 统计数据 -->
         <div v-if="itemDetail" class="info-item">
           <span class="info-label">在售平台</span>
           <span class="info-value highlight">{{ getActivePlatformCount() }}</span>
         </div>
-        
+
         <div v-if="itemDetail?.holdersNum" class="info-item">
           <span class="info-label">持有者数量</span>
           <span class="info-value">{{ formatNumber(itemDetail.holdersNum) }}</span>
         </div>
       </div>
-      
+
       <!-- 标签展示 -->
       <div v-if="itemDetail?.tags?.length" class="tags-section">
         <div class="section-subtitle">饰品标签</div>
         <div class="tags-container">
-          <el-tag 
-            v-for="(tag, index) in getFilteredTags()" 
-            :key="index"
-            size="small"
-            type="info"
-            class="info-tag"
-          >
+          <el-tag v-for="(tag, index) in getFilteredTags()" :key="index" size="small" type="info" class="info-tag">
             {{ formatTag(tag) }}
           </el-tag>
         </div>
       </div>
     </div>
-    
+
+    <!-- 价格趋势卡片 -->
+    <div v-if="itemDetail && (itemDetail.diff1Day || itemDetail.diff7Day)" class="trend-card">
+      <h3 class="card-title">价格趋势</h3>
+      <p></p>
+      <div class="trend-container">
+        <div class="trend-item" :class="getPriceTrendClass(itemDetail.diff1Day)">
+          <div class="trend-label">24小时</div>
+          <div class="trend-value">{{ formatTrendValue(itemDetail.diff1Day) }}</div>
+          <div class="trend-price">¥{{ formatPrice(Math.abs(itemDetail.diff1DayPrice)) }}</div>
+        </div>
+
+        <div class="trend-item" :class="getPriceTrendClass(itemDetail.diff7Day)">
+          <div class="trend-label">7天</div>
+          <div class="trend-value">{{ formatTrendValue(itemDetail.diff7Day) }}</div>
+          <div class="trend-price">¥{{ formatPrice(Math.abs(itemDetail.diff7DayPrice)) }}</div>
+        </div>
+
+        <div v-if="itemDetail.diff30Day" class="trend-item" :class="getPriceTrendClass(itemDetail.diff30Day)">
+          <div class="trend-label">30天</div>
+          <div class="trend-value">{{ formatTrendValue(itemDetail.diff30Day) }}</div>
+          <div class="trend-price">¥{{ formatPrice(Math.abs(itemDetail.diff30DayPrice)) }}</div>
+        </div>
+
+        <div v-if="itemDetail.diff6Month" class="trend-item" :class="getPriceTrendClass(itemDetail.diff6Month)">
+          <div class="trend-label">6个月</div>
+          <div class="trend-value">{{ formatTrendValue(itemDetail.diff6Month) }}</div>
+          <div class="trend-price">¥{{ formatPrice(Math.abs(itemDetail.diff6MonthPrice)) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交易建议卡片 -->
+
+
     <!-- 市场动态卡片 -->
     <div v-if="itemDetail" class="market-dynamics-card">
       <h3 class="card-title">市场动态</h3>
+      <p></p>
       <div class="dynamics-grid">
         <!-- 存世量 -->
         <div class="dynamic-item">
           <div class="dynamic-icon">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
           <div class="dynamic-content">
@@ -85,13 +110,13 @@
             <div class="dynamic-desc">当前市场流通数量</div>
           </div>
         </div>
-        
+
         <!-- 换手率 -->
         <div class="dynamic-item">
           <div class="dynamic-icon">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </div>
           <div class="dynamic-content">
@@ -108,13 +133,13 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 成交量比率 -->
         <div v-if="itemDetail?.volumeRatio" class="dynamic-item">
           <div class="dynamic-icon">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
           <div class="dynamic-content">
@@ -123,13 +148,13 @@
             <div class="dynamic-desc">相对市场平均水平</div>
           </div>
         </div>
-        
+
         <!-- 近期成交 -->
         <div v-if="itemDetail?.transactionCount" class="dynamic-item">
           <div class="dynamic-icon">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div class="dynamic-content">
@@ -140,70 +165,8 @@
         </div>
       </div>
     </div>
-    
-    <!-- 价格趋势卡片 -->
-    <div v-if="itemDetail && (itemDetail.diff1Day || itemDetail.diff7Day)" class="trend-card">
-      <h3 class="card-title">价格趋势</h3>
-      <div class="trend-container">
-        <div class="trend-item" :class="getPriceTrendClass(itemDetail.diff1Day)">
-          <div class="trend-label">24小时</div>
-          <div class="trend-value">{{ formatTrendValue(itemDetail.diff1Day) }}</div>
-          <div class="trend-price">¥{{ formatPrice(Math.abs(itemDetail.diff1DayPrice)) }}</div>
-        </div>
-        
-        <div class="trend-item" :class="getPriceTrendClass(itemDetail.diff7Day)">
-          <div class="trend-label">7天</div>
-          <div class="trend-value">{{ formatTrendValue(itemDetail.diff7Day) }}</div>
-          <div class="trend-price">¥{{ formatPrice(Math.abs(itemDetail.diff7DayPrice)) }}</div>
-        </div>
-        
-        <div v-if="itemDetail.diff30Day" class="trend-item" :class="getPriceTrendClass(itemDetail.diff30Day)">
-          <div class="trend-label">30天</div>
-          <div class="trend-value">{{ formatTrendValue(itemDetail.diff30Day) }}</div>
-          <div class="trend-price">¥{{ formatPrice(Math.abs(itemDetail.diff30DayPrice)) }}</div>
-        </div>
-        
-        <div v-if="itemDetail.diff6Month" class="trend-item" :class="getPriceTrendClass(itemDetail.diff6Month)">
-          <div class="trend-label">6个月</div>
-          <div class="trend-value">{{ formatTrendValue(itemDetail.diff6Month) }}</div>
-          <div class="trend-price">¥{{ formatPrice(Math.abs(itemDetail.diff6MonthPrice)) }}</div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 交易建议卡片 -->
-    <div v-if="itemDetail && (itemDetail.consignmentBest || itemDetail.purchaseBest)" class="trading-advice-card">
-      <h3 class="card-title">交易建议</h3>
-      <div class="advice-grid">
-        <div v-if="itemDetail.consignmentBest" class="advice-item">
-          <div class="advice-icon buy">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-          </div>
-          <div class="advice-content">
-            <div class="advice-label">寄售最佳价</div>
-            <div class="advice-value">¥{{ formatPrice(itemDetail.consignmentBest) }}</div>
-            <div class="advice-desc">推荐寄售价格</div>
-          </div>
-        </div>
-        
-        <div v-if="itemDetail.purchaseBest" class="advice-item">
-          <div class="advice-icon sell">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          </div>
-          <div class="advice-content">
-            <div class="advice-label">收购最佳价</div>
-            <div class="advice-value">¥{{ formatPrice(itemDetail.purchaseBest) }}</div>
-            <div class="advice-desc">推荐收购价格</div>
-          </div>
-        </div>
-      </div>
-    </div>
+
+
   </div>
 </template>
 
@@ -316,6 +279,19 @@ const getTrendClass = (trend: number) => {
   if (trend < 0) return 'trend-down'
   return ''
 }
+
+//tag背景色透明处理
+// 处理RGB/RGBA颜色，添加透明度
+const getTransparentColor = (color: string) => {
+  // 如果是RGBA，替换alpha值；如果是RGB，转成RGBA
+  if (color.includes('rgba')) {
+    return color.replace(/rgba\((\d+,\s*\d+,\s*\d+),\s*\d+(\.\d+)?\)/, 'rgba($1, 0.3)');
+  } else if (color.includes('rgb')) {
+    return color.replace(/rgb\((\d+,\s*\d+,\s*\d+)\)/, 'rgba($1, 0.3)');
+  }
+  // 兼容十六进制（兜底）
+  return color + '30';
+}
 </script>
 
 <style scoped>
@@ -326,6 +302,14 @@ const getTrendClass = (trend: number) => {
   width: 100%;
 }
 
+
+.bottominfo {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 20px;
+}
+
 /* 卡片通用样式 */
 .basic-info-card,
 .market-dynamics-card,
@@ -334,6 +318,7 @@ const getTrendClass = (trend: number) => {
   background: white;
   border-radius: 16px;
   padding: 24px;
+  min-width: 40%;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
 }
@@ -364,7 +349,6 @@ const getTrendClass = (trend: number) => {
 .analysis-tag-mini {
   padding: 4px 8px;
   border-radius: 12px;
-  color: white;
   font-size: 11px;
   font-weight: 500;
 }
@@ -589,107 +573,34 @@ const getTrendClass = (trend: number) => {
   font-weight: 500;
 }
 
-/* 交易建议网格 */
-.advice-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.advice-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: #f9fafb;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s ease;
-}
-
-.advice-item:hover {
-  background: #f3f4f6;
-  transform: translateY(-2px);
-}
-
-.advice-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.advice-icon.buy {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-}
-
-.advice-icon.sell {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-}
-
-.advice-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.advice-label {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 4px;
-}
-
-.advice-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 2px;
-}
-
-.advice-desc {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-/* 趋势颜色类 */
-.trend-up {
-  color: #10b981;
-}
-
-.trend-down {
-  color: #ef4444;
-}
+/* */
 
 /* 响应式调整 */
 @media (max-width: 768px) {
   .skin-info-container {
     gap: 16px;
   }
-  
+
   .basic-info-card,
   .market-dynamics-card,
   .trend-card,
   .trading-advice-card {
     padding: 20px;
   }
-  
+
   .info-grid,
   .dynamics-grid,
   .trend-container,
   .advice-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .analysis-tags-mini {
     width: 100%;
     justify-content: flex-start;
@@ -697,18 +608,19 @@ const getTrendClass = (trend: number) => {
 }
 
 @media (max-width: 480px) {
+
   .basic-info-card,
   .market-dynamics-card,
   .trend-card,
   .trading-advice-card {
     padding: 16px;
   }
-  
+
   .info-value.code {
     font-size: 13px;
     padding: 4px 8px;
   }
-  
+
   .dynamic-item,
   .advice-item {
     padding: 14px;

@@ -82,7 +82,7 @@ const selectItem = (item: SkinItem) => {
 .search-container {
   position: relative;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1600px;
 }
 
 .search-input-wrapper {

@@ -28,70 +28,94 @@
                     <div class="selected-content">
                         <!-- 左侧：图片和名称 -->
                         <div class="selected-left">
-                            <div class="selected-image">
-                                <el-image 
-                                    :src="itemimg" 
-                                    fit="contain" 
-                                    :preview-src-list="[itemimg]" 
-                                    :initial-index="0"
-                                    :hide-on-click-modal="true" 
-                                    :z-index="9999" 
-                                    preview-teleported
-                                >
-                                    <template #placeholder>
-                                        <div class="image-placeholder">
-                                            <div class="loading-spinner small"></div>
-                                            <span class="loading-text">加载中...</span>
-                                        </div>
-                                    </template>
-                                    <template #error>
-                                        <div class="image-error">
-                                            <span>图片加载失败</span>
-                                        </div>
-                                    </template>
-                                </el-image>
-                                <div v-if="loading" class="loading-overlay">
-                                    <div class="loading-spinner"></div>
+                            <!-- 基本信息卡片 -->
+                            <div class="select-info">
+                                <div class="selected-image">
+                                    <el-image :src="itemimg" fit="contain" :preview-src-list="[itemimg]"
+                                        :initial-index="0" :hide-on-click-modal="true" :z-index="9999"
+                                        preview-teleported>
+                                        <template #placeholder>
+                                            <div class="image-placeholder">
+                                                <div class="loading-spinner small"></div>
+                                                <span class="loading-text">加载中...</span>
+                                            </div>
+                                        </template>
+                                        <template #error>
+                                            <div class="image-error">
+                                                <span>图片加载失败</span>
+                                            </div>
+                                        </template>
+                                    </el-image>
+                                    <div v-if="loading" class="loading-overlay">
+                                        <div class="loading-spinner"></div>
+                                    </div>
+
+                                    <!-- 添加放大图标提示 -->
+                                    <div class="preview-hint">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                                        </svg>
+                                        点击查看大图
+                                    </div>
                                 </div>
-                                
-                                <!-- 添加放大图标提示 -->
-                                <div class="preview-hint">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
-                                    </svg>
-                                    点击查看大图
+                                <!-- 品质标签 -->
+                                <div v-if="itemDetail" class="quality-tags">
+                                    <el-tag size="small" :color="itemDetail.qualityColor" effect="dark"
+                                        class="quality-tag">
+                                        {{ itemDetail.qualityName }}
+                                    </el-tag>
+                                    <el-tag size="small" :color="itemDetail.rarityColor" effect="dark"
+                                        class="rarity-tag">
+                                        {{ itemDetail.rarityName }}
+                                    </el-tag>
+                                    <el-tag size="small" :color="itemDetail.exteriorColor" effect="dark"
+                                        class="exterior-tag">
+                                        {{ itemDetail.exteriorName }}
+                                    </el-tag>
+                                </div>
+                                <div class="selected-name">
+                                    {{ selectedSkin.name }}
                                 </div>
                             </div>
-                            <!-- 品质标签 -->
-                            <div v-if="itemDetail" class="quality-tags">
-                                <el-tag 
-                                    size="small" 
-                                    :color="itemDetail.qualityColor" 
-                                    effect="dark"
-                                    class="quality-tag"
-                                >
-                                    {{ itemDetail.qualityName }}
-                                </el-tag>
-                                <el-tag 
-                                    size="small" 
-                                    :color="itemDetail.rarityColor" 
-                                    effect="dark"
-                                    class="rarity-tag"
-                                >
-                                    {{ itemDetail.rarityName }}
-                                </el-tag>
-                                <el-tag 
-                                    size="small" 
-                                    :color="itemDetail.exteriorColor" 
-                                    effect="dark"
-                                    class="exterior-tag"
-                                >
-                                    {{ itemDetail.exteriorName }}
-                                </el-tag>
-                            </div>
-                            <div class="selected-name">
-                                {{ selectedSkin.name }}
+                            <!-- 交易建议卡片 -->
+                            <div v-if="itemDetail && (itemDetail.consignmentBest || itemDetail.purchaseBest)"
+                                class="trading-advice-card">
+                                <h3 class="card-title">交易建议</h3>
+                                <p></p>
+                                <div class="advice-grid">
+                                    <div v-if="itemDetail.consignmentBest" class="advice-item">
+                                        <div class="advice-icon buy">
+                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                            </svg>
+                                        </div>
+                                        <div class="advice-content">
+                                            <div class="advice-label">寄售最佳价</div>
+                                            <div class="advice-value">¥{{ formatPrice(itemDetail.consignmentBest) }}
+                                            </div>
+                                            <div class="advice-desc">推荐寄售价格</div>
+                                        </div>
+                                    </div>
+
+                                    <div v-if="itemDetail.purchaseBest" class="advice-item">
+                                        <div class="advice-icon sell">
+                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                            </svg>
+                                        </div>
+                                        <div class="advice-content">
+                                            <div class="advice-label">收购最佳价</div>
+                                            <div class="advice-value">¥{{ formatPrice(itemDetail.purchaseBest) }}</div>
+                                            <div class="advice-desc">推荐收购价格</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -185,7 +209,7 @@ const handleSkinSelect = async (skin: any) => {
     error.value = null
     loading.value = true
     loadingWear.value = true
-    
+
     try {
         // 并行请求所有数据
         const [priceResult, avgPriceResult, wearResult] = await Promise.allSettled([
@@ -196,7 +220,7 @@ const handleSkinSelect = async (skin: any) => {
 
         // 获取选择的饰品的详细信息
         itemDetail.value = await api.getSkinDetail(skin.marketHashName);
-        
+
         // 处理价格数据
         if (priceResult.status === 'fulfilled') {
             priceData.value = priceResult.value
@@ -242,6 +266,20 @@ const handleViewItem = async (marketHashName: string) => {
     } finally {
         loadingWear.value = false
     }
+}
+
+
+const formatPrice = (price: number) => {
+    if (price >= 1000000) {
+        return (price / 1000000).toFixed(2) + 'M'
+    }
+    if (price >= 10000) {
+        return (price / 10000).toFixed(2) + '万'
+    }
+    if (price >= 1000) {
+        return (price / 1000).toFixed(2) + '千'
+    }
+    return price.toFixed(2)
 }
 </script>
 
@@ -302,18 +340,32 @@ const handleViewItem = async (marketHashName: string) => {
 .selected-content {
     display: flex;
     gap: 40px;
-    align-items: center;
+    align-items: flex-start;
 }
 
 /* 左侧：图片和名称 - 增大尺寸 */
+
+
 .selected-left {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items:center;
+    justify-content:center;
+    justify-content: space-between; 
     min-width: 320px;
     flex-shrink: 0;
+    min-height: 400px; 
 }
-
+/* 信息 */
+.select-info{
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 7%;
+    min-width: 60%;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
 .selected-image {
     position: relative;
     width: 300px;
@@ -409,10 +461,108 @@ const handleViewItem = async (marketHashName: string) => {
     margin-bottom: 8px;
 }
 
+/* 交易建议 */
+
+.trading-advice-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 7%;
+    min-width: 85%;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 交易建议网格 */
+.advice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+    gap: 20px;
+}
+
+.advice-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.advice-item:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+}
+
+.advice-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.advice-icon.buy {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.advice-icon.sell {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+}
+
+.advice-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.advice-label {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.advice-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 2px;
+}
+
+.advice-desc {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* 趋势颜色类 */
+.trend-up {
+    color: #10b981;
+}
+
+.trend-down {
+    color: #ef4444;
+}
+
 /* 右侧：信息展示区域 */
 .selected-right {
     flex: 1;
     min-width: 0;
+    min-height: 400px;
 }
 
 /* 加载遮罩 */
@@ -581,12 +731,12 @@ const handleViewItem = async (marketHashName: string) => {
     .selected-left {
         min-width: 280px;
     }
-    
+
     .selected-image {
         width: 260px;
         height: 195px;
     }
-    
+
     .selected-name {
         max-width: 260px;
         font-size: 18px;
@@ -597,11 +747,11 @@ const handleViewItem = async (marketHashName: string) => {
     .selected-content {
         gap: 32px;
     }
-    
+
     .selected-left {
         min-width: 240px;
     }
-    
+
     .selected-image {
         width: 220px;
         height: 165px;
@@ -631,11 +781,11 @@ const handleViewItem = async (marketHashName: string) => {
         max-width: 100%;
         font-size: 20px;
     }
-    
+
     .quality-tags {
         justify-content: center;
     }
-    
+
     .title {
         font-size: 28px;
     }
@@ -669,7 +819,7 @@ const handleViewItem = async (marketHashName: string) => {
         height: auto;
         aspect-ratio: 4/3;
     }
-    
+
     .selected-name {
         font-size: 18px;
     }
