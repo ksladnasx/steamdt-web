@@ -80,3 +80,72 @@ export interface AvgPriceResponse {
   errorData: any;
   errorCodeStr: string | null;
 }
+
+// 添加类型定义
+export interface SellingPrice {
+  platform: string;
+  platformName: string;
+  price: number;
+  updateTime: number;
+  link: string;
+}
+
+export interface AnalysisTag {
+  type: string;
+  key: string;
+  style: string;
+  background: string;
+  desc: string;
+}
+
+export interface SkinDetailInfo {
+  id: string;
+  itemType: string;
+  itemId: string;
+  name: string;
+  shortName: string;
+  marketHashName: string;
+  marketShortName: string;
+  imageUrl: string;
+  qualityName: string;
+  qualityColor: string;
+  rarityName: string;
+  rarityColor: string;
+  exteriorName: string;
+  exteriorColor: string;
+  addNum: string;
+  surviveNum: string;
+  turnoverRate: number;
+  turnoverRateIsRise: number;
+  holdersNum: string;
+  volumeRatio: number;
+  sellingPriceList: SellingPrice[];
+  consignmentBest: number;
+  purchaseBest: number;
+  purchaseStable: number;
+  diff1Day: number;
+  diff7Day: number;
+  diff30Day: number;
+  diff6Month: number;
+  diff1DayPrice: number;
+  diff7DayPrice: number;
+  diff30DayPrice: number;
+  diff6MonthPrice: number;
+  increasePrice: number;
+  trendList: any[];
+  isCollect: boolean;
+  tags: string[];
+  transactionCount: string;
+  analysisTags: AnalysisTag[];
+  cashRatio: number;
+  specialStyle: any[];
+}
+
+export interface SkinDetailResponse {
+  success: boolean;
+  data: SkinDetailInfo;
+  errorCode: number;
+  errorMsg: string | null;
+  errorData: any;
+  errorCodeStr: string | null;
+}

@@ -22,18 +22,54 @@
                 <div class="search-wrapper">
                     <SearchInput :items="skinData" @select="handleSkinSelect" />
                 </div>
-                <div v-if="selectedSkin" class="selected-info">
-                    <div class="selected-badge">
-                        当前选择：{{ selectedSkin.name }}
-                        <span v-if="loading" class="loading-indicator"></span>
+
+                <!-- 选中后的展示区域 -->
+                <div v-if="selectedSkin" class="selected-container">
+                    <div class="selected-content">
+                        <!-- 左侧：图片和名称 -->
+                        <!-- 左侧：图片和名称 -->
+                        <div class="selected-left">
+                            <div class="selected-image">
+                                <el-image :src="itemimg" fit="cover" :preview-src-list="[itemimg]" :initial-index="0"
+                                    :hide-on-click-modal="true" :z-index="9999" preview-teleported>
+                                    <!-- 可以添加加载状态的slot -->
+                                    <template #placeholder>
+                                        <div class="image-placeholder">
+                                            <span class="loading-spinner small"></span>
+                                        </div>
+                                    </template>
+                                    <template #error>
+                                        <div class="image-error">
+                                            <span>图片加载失败</span>
+                                        </div>
+                                    </template>
+                                </el-image>
+                                <div v-if="loading" class="loading-overlay">
+                                    <span class="loading-spinner"></span>
+                                </div>
+
+                                <!-- 添加放大图标提示 -->
+                                <div class="preview-hint">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                                    </svg>
+                                    查看
+                                </div>
+                            </div>
+                            <div class="selected-name">
+                                {{ selectedSkin.name }}
+                            </div>
+                        </div>
+
+                        <!-- 右侧：信息展示区域 -->
+                        <div class="selected-right">
+                            <SkinInfo :skin="selectedSkin" />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 信息展示区域 -->
-            <div v-if="selectedSkin" class="info-section">
-                <SkinInfo :skin="selectedSkin" />
-            </div>
 
             <!-- 价格展示区域 -->
             <div v-if="priceData || avgPriceData" class="price-section">
@@ -70,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted} from 'vue'
+import { ref, onMounted } from 'vue'
 import SearchInput from '@/components/SearchInput.vue'
 import SkinInfo from '@/components/SkinInfo.vue'
 import PriceDisplay from '@/components/PriceDisplay.vue'
@@ -88,10 +124,14 @@ const loading = ref(false)
 const loadingWear = ref(false)
 const error = ref<string | null>(null)
 
+
+const itemimg = ref('')
+
 // 在组件挂载时加载数据
 onMounted(async () => {
     try {
         skinData.value = await api.loadLocalSkinData()
+        
     } catch (err) {
         console.error('加载饰品数据失败，使用示例数据:', err)
         skinData.value = api.getSampleSkinData()
@@ -116,7 +156,7 @@ const handleSkinSelect = async (skin: any) => {
             api.getSkinAvgPrice(skin.marketHashName),
             api.getMoreSkinPrices(skin.marketHashName)
         ])
-
+        itemimg.value = (await api.getSkinDetail(skin.marketHashName)).imageUrl
         // 处理价格数据
         if (priceResult.status === 'fulfilled') {
             priceData.value = priceResult.value
@@ -221,17 +261,159 @@ const handleViewItem = async (marketHashName: string) => {
     margin-top: 16px;
 }
 
-.selected-badge {
-    display: inline-flex;
+/* 选中的饰品容器 */
+.selected-container {
+    margin-top: 24px;
+    background: rgb(255, 255, 255);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.selected-content {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+}
+
+/* 左侧：图片和名称 */
+.selected-left {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 8px 20px;
-    background: white;
-    border: 2px solid #3b82f6;
-    border-radius: 20px;
-    color: #3b82f6;
-    font-weight: 500;
+    min-width: 200px;
+    flex-shrink: 0;
+}
+
+.selected-image {
+    position: relative;
+    width: 180px;
+    height: 135px;
+    /* 4:3比例 */
+    margin-bottom: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.selected-image .el-image {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.3s ease;
+}
+
+.selected-image:hover .el-image {
+    transform: scale(1.05);
+}
+
+/* 图片占位符 */
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+}
+
+.image-error {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fef2f2;
+    color: #dc2626;
     font-size: 14px;
+}
+
+.loading-spinner.small {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+}
+
+/* 可选：添加点击放大动画效果 */
+.selected-image:active .el-image {
+    transform: scale(0.98);
+}
+
+.selected-name {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.4;
+    word-break: break-word;
+    max-width: 200px;
+}
+
+/* 右侧：信息展示区域 */
+.selected-right {
+    flex: 1;
+    min-width: 0;
+    /* 防止flex item溢出 */
+}
+
+/* 加载遮罩 */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #3b82f6;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .selected-content {
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .selected-left {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .selected-image {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto 16px;
+    }
+
+    .selected-name {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .selected-container {
+        padding: 16px;
+    }
+
+    .selected-image {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4/3;
+    }
 }
 
 .info-section {
@@ -381,4 +563,31 @@ const handleViewItem = async (marketHashName: string) => {
         text-align: center;
     }
 }
+
+
+
+/* 图片预览提示 */
+.preview-hint {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.selected-image:hover .preview-hint {
+    opacity: 1;
+}
+
+
 </style>
