@@ -27,15 +27,21 @@
                 <div v-if="selectedSkin" class="selected-container">
                     <div class="selected-content">
                         <!-- 左侧：图片和名称 -->
-                        <!-- 左侧：图片和名称 -->
                         <div class="selected-left">
                             <div class="selected-image">
-                                <el-image :src="itemimg" fit="cover" :preview-src-list="[itemimg]" :initial-index="0"
-                                    :hide-on-click-modal="true" :z-index="9999" preview-teleported>
-                                    <!-- 可以添加加载状态的slot -->
+                                <el-image 
+                                    :src="itemimg" 
+                                    fit="contain" 
+                                    :preview-src-list="[itemimg]" 
+                                    :initial-index="0"
+                                    :hide-on-click-modal="true" 
+                                    :z-index="9999" 
+                                    preview-teleported
+                                >
                                     <template #placeholder>
                                         <div class="image-placeholder">
-                                            <span class="loading-spinner small"></span>
+                                            <div class="loading-spinner small"></div>
+                                            <span class="loading-text">加载中...</span>
                                         </div>
                                     </template>
                                     <template #error>
@@ -45,17 +51,44 @@
                                     </template>
                                 </el-image>
                                 <div v-if="loading" class="loading-overlay">
-                                    <span class="loading-spinner"></span>
+                                    <div class="loading-spinner"></div>
                                 </div>
-
+                                
                                 <!-- 添加放大图标提示 -->
                                 <div class="preview-hint">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
                                     </svg>
-                                    查看
+                                    点击查看大图
                                 </div>
+                            </div>
+                            <!-- 品质标签 -->
+                            <div v-if="itemDetail" class="quality-tags">
+                                <el-tag 
+                                    size="small" 
+                                    :color="itemDetail.qualityColor" 
+                                    effect="dark"
+                                    class="quality-tag"
+                                >
+                                    {{ itemDetail.qualityName }}
+                                </el-tag>
+                                <el-tag 
+                                    size="small" 
+                                    :color="itemDetail.rarityColor" 
+                                    effect="dark"
+                                    class="rarity-tag"
+                                >
+                                    {{ itemDetail.rarityName }}
+                                </el-tag>
+                                <el-tag 
+                                    size="small" 
+                                    :color="itemDetail.exteriorColor" 
+                                    effect="dark"
+                                    class="exterior-tag"
+                                >
+                                    {{ itemDetail.exteriorName }}
+                                </el-tag>
                             </div>
                             <div class="selected-name">
                                 {{ selectedSkin.name }}
@@ -64,12 +97,11 @@
 
                         <!-- 右侧：信息展示区域 -->
                         <div class="selected-right">
-                            <SkinInfo :skin="selectedSkin" />
+                            <SkinInfo :skin="selectedSkin" :item-detail="itemDetail" />
                         </div>
                     </div>
                 </div>
             </div>
-
 
             <!-- 价格展示区域 -->
             <div v-if="priceData || avgPriceData" class="price-section">
@@ -106,7 +138,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { ElTag } from 'element-plus'
 import SearchInput from '@/components/SearchInput.vue'
 import SkinInfo from '@/components/SkinInfo.vue'
 import PriceDisplay from '@/components/PriceDisplay.vue'
@@ -123,15 +156,19 @@ const wearData = ref<SkinWearDetailResponse | null>(null)
 const loading = ref(false)
 const loadingWear = ref(false)
 const error = ref<string | null>(null)
+const itemDetail: any = ref(null)
 
-
-const itemimg = ref('')
+const itemimg = computed(() => {
+    if (itemDetail.value && itemDetail.value.imageUrl) {
+        return itemDetail.value.imageUrl;
+    }
+    return '';
+});
 
 // 在组件挂载时加载数据
 onMounted(async () => {
     try {
         skinData.value = await api.loadLocalSkinData()
-        
     } catch (err) {
         console.error('加载饰品数据失败，使用示例数据:', err)
         skinData.value = api.getSampleSkinData()
@@ -148,7 +185,7 @@ const handleSkinSelect = async (skin: any) => {
     error.value = null
     loading.value = true
     loadingWear.value = true
-
+    
     try {
         // 并行请求所有数据
         const [priceResult, avgPriceResult, wearResult] = await Promise.allSettled([
@@ -156,7 +193,10 @@ const handleSkinSelect = async (skin: any) => {
             api.getSkinAvgPrice(skin.marketHashName),
             api.getMoreSkinPrices(skin.marketHashName)
         ])
-        itemimg.value = (await api.getSkinDetail(skin.marketHashName)).imageUrl
+
+        // 获取选择的饰品的详细信息
+        itemDetail.value = await api.getSkinDetail(skin.marketHashName);
+        
         // 处理价格数据
         if (priceResult.status === 'fulfilled') {
             priceData.value = priceResult.value
@@ -178,7 +218,6 @@ const handleSkinSelect = async (skin: any) => {
             wearData.value = wearResult.value
         } else {
             console.error('获取磨损数据失败:', wearResult.reason)
-            //   wearData.value = api.getMockWearDetailData(skin.marketHashName)
         }
 
     } catch (err: any) {
@@ -190,14 +229,10 @@ const handleSkinSelect = async (skin: any) => {
     }
 }
 
-
 // 处理查看按钮点击
 const handleViewItem = async (marketHashName: string) => {
     console.log('开始搜索:', marketHashName)
 
-    // 这里需要重新搜索对应的饰品并加载数据
-    // 你可以调用父组件的方法，或者直接在这里重新加载数据
-    // 例如：
     loadingWear.value = true
     try {
         // 重新加载数据
@@ -211,7 +246,6 @@ const handleViewItem = async (marketHashName: string) => {
 </script>
 
 <style scoped>
-/* 保持原有样式不变 */
 .skin-search-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #f6f9fc 0%, #f1f5f9 100%);
@@ -242,7 +276,7 @@ const handleViewItem = async (marketHashName: string) => {
 }
 
 .main-content {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 0 20px;
 }
@@ -255,57 +289,56 @@ const handleViewItem = async (marketHashName: string) => {
     margin-bottom: 16px;
 }
 
-.selected-info {
-    display: flex;
-    justify-content: center;
-    margin-top: 16px;
-}
-
 /* 选中的饰品容器 */
 .selected-container {
     margin-top: 24px;
-    background: rgb(255, 255, 255);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     border: 1px solid #e5e7eb;
 }
 
 .selected-content {
     display: flex;
-    gap: 32px;
-    align-items: flex-start;
+    gap: 40px;
+    align-items: center;
 }
 
-/* 左侧：图片和名称 */
+/* 左侧：图片和名称 - 增大尺寸 */
 .selected-left {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 200px;
+    min-width: 320px;
     flex-shrink: 0;
 }
 
 .selected-image {
     position: relative;
-    width: 180px;
-    height: 135px;
-    /* 4:3比例 */
-    margin-bottom: 16px;
-    border-radius: 8px;
+    width: 300px;
+    height: 225px;
+    margin-bottom: 20px;
+    border-radius: 12px;
     overflow: hidden;
     border: 1px solid #e5e7eb;
-    background: #f8fafc;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.selected-image .el-image {
-    width: 100%;
-    height: 100%;
-    transition: transform 0.3s ease;
+.selected-image:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .selected-image:hover .el-image {
     transform: scale(1.05);
+}
+
+.selected-image:active {
+    transform: translateY(0);
 }
 
 /* 图片占位符 */
@@ -313,9 +346,11 @@ const handleViewItem = async (marketHashName: string) => {
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     background: #f8fafc;
+    gap: 12px;
 }
 
 .image-error {
@@ -330,31 +365,54 @@ const handleViewItem = async (marketHashName: string) => {
 }
 
 .loading-spinner.small {
-    width: 24px;
-    height: 24px;
-    border-width: 2px;
+    width: 40px;
+    height: 40px;
+    border: 3px solid #3b82f6;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-/* 可选：添加点击放大动画效果 */
-.selected-image:active .el-image {
-    transform: scale(0.98);
+.loading-text {
+    font-size: 14px;
+    color: #6b7280;
 }
 
+/* 品质标签容器 */
+.quality-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.quality-tag,
+.rarity-tag,
+.exterior-tag {
+    font-weight: 600;
+    border: none !important;
+    font-size: 12px;
+    padding: 4px 10px;
+}
+
+/* 名称样式 */
 .selected-name {
     text-align: center;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
     color: #1f2937;
     line-height: 1.4;
     word-break: break-word;
-    max-width: 200px;
+    max-width: 300px;
+    padding: 0 10px;
+    margin-bottom: 8px;
 }
 
 /* 右侧：信息展示区域 */
 .selected-right {
     flex: 1;
     min-width: 0;
-    /* 防止flex item溢出 */
 }
 
 /* 加载遮罩 */
@@ -364,56 +422,45 @@ const handleViewItem = async (marketHashName: string) => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
 .loading-spinner {
-    display: inline-block;
-    width: 32px;
-    height: 32px;
-    border: 3px solid #3b82f6;
+    width: 48px;
+    height: 48px;
+    border: 4px solid #3b82f6;
     border-right-color: transparent;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
-/* 响应式调整 */
-@media (max-width: 768px) {
-    .selected-content {
-        flex-direction: column;
-        gap: 24px;
-    }
-
-    .selected-left {
-        width: 100%;
-        min-width: auto;
-    }
-
-    .selected-image {
-        width: 100%;
-        max-width: 300px;
-        margin: 0 auto 16px;
-    }
-
-    .selected-name {
-        max-width: 100%;
-    }
+/* 图片预览提示 */
+.preview-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
 }
 
-@media (max-width: 480px) {
-    .selected-container {
-        padding: 16px;
-    }
-
-    .selected-image {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 4/3;
-    }
+.selected-image:hover .preview-hint {
+    opacity: 1;
+    bottom: 20px;
 }
 
 .info-section {
@@ -489,7 +536,7 @@ const handleViewItem = async (marketHashName: string) => {
     border-radius: 12px;
     padding: 12px 20px;
     margin: 20px auto;
-    max-width: 1200px;
+    max-width: 1400px;
     color: #991b1b;
 }
 
@@ -523,24 +570,72 @@ const handleViewItem = async (marketHashName: string) => {
     background: rgba(153, 27, 27, 0.1);
 }
 
-.loading-indicator {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    margin-left: 8px;
-    border: 2px solid currentColor;
-    border-right-color: transparent;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
 
+/* 响应式调整 */
+@media (max-width: 1200px) {
+    .selected-left {
+        min-width: 280px;
+    }
+    
+    .selected-image {
+        width: 260px;
+        height: 195px;
+    }
+    
+    .selected-name {
+        max-width: 260px;
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 992px) {
+    .selected-content {
+        gap: 32px;
+    }
+    
+    .selected-left {
+        min-width: 240px;
+    }
+    
+    .selected-image {
+        width: 220px;
+        height: 165px;
+    }
+}
+
 @media (max-width: 768px) {
+    .selected-content {
+        flex-direction: column;
+        gap: 32px;
+    }
+
+    .selected-left {
+        width: 100%;
+        min-width: auto;
+        align-items: center;
+    }
+
+    .selected-image {
+        width: 100%;
+        max-width: 320px;
+        height: 240px;
+        margin: 0 auto 20px;
+    }
+
+    .selected-name {
+        max-width: 100%;
+        font-size: 20px;
+    }
+    
+    .quality-tags {
+        justify-content: center;
+    }
+    
     .title {
         font-size: 28px;
     }
@@ -564,30 +659,19 @@ const handleViewItem = async (marketHashName: string) => {
     }
 }
 
+@media (max-width: 480px) {
+    .selected-container {
+        padding: 20px;
+    }
 
-
-/* 图片预览提示 */
-.preview-hint {
-    position: absolute;
-    bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
+    .selected-image {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4/3;
+    }
+    
+    .selected-name {
+        font-size: 18px;
+    }
 }
-
-.selected-image:hover .preview-hint {
-    opacity: 1;
-}
-
-
 </style>
