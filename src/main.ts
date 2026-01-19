@@ -10,11 +10,11 @@ const pinia = createPinia()
 const app = createApp(App)
 
 app.use(router)
-app.use(pinia)
+
 app.use(ElementPlus)
 // 注册所有图标（可选）
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
-
+app.use(pinia)
 app.mount('#app')

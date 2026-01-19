@@ -2,8 +2,8 @@
     <div class="skin-search-container">
         <!-- 头部 -->
         <header class="header">
-            <h1 class="title">Steam饰品价格查询</h1>
-            <p class="subtitle">快速查询CSGO饰品在各平台的价格信息</p>
+            <h1 class="title" @click="handlebackclick">CS2饰品价格查询</h1>
+            <p class="subtitle">快速查询CS2饰品在各平台的价格信息</p>
         </header>
 
         <!-- 错误提示 -->
@@ -151,6 +151,14 @@
                     <div class="tip-item">💡 支持英文名称搜索</div>
                     <div class="tip-item">💡 支持模糊搜索</div>
                 </div>
+                <!-- 修改apiKey的入口 -->
+                 <div>
+                    <p class="empty-desc" style="margin-top: 20px;">⚙️ 如需修改API Key：</p>
+                    <el-input v-model="apikey" placeholder="请输入" />
+                    <el-button type="primary" style="margin-top: 10px;" @click="handleApiKeySave">保存</el-button>
+                    <el-button type="primary" style="margin-top: 10px;" @click="handleApiKeyClear">取消</el-button>
+                 </div>
+
             </div>
         </main>
 
@@ -163,17 +171,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { ElTag } from 'element-plus'
+import { ElTag, ElButton } from 'element-plus';
 import SearchInput from '@/components/SearchInput.vue'
 import SkinInfo from '@/components/SkinInfo.vue'
 import PriceDisplay from '@/components/PriceDisplay.vue'
 import MoreInfo from '@/components/MoreInfo.vue'
 import type { SkinItem, PriceData, AvgPriceResponse, SkinWearDetailResponse } from '@/types'
+import { useitemsStore } from '@/stores/items'
 import * as api from '@/api'
-
+// 引入状态管理
+const itemsStore = useitemsStore();
 // 组件状态
 const skinData = ref<SkinItem[]>([])
-const selectedSkin = ref<any>(null)
+const selectedSkin = itemsStore.selectedSkin || ref<any>(null);
 const priceData = ref<PriceData[]>()
 const avgPriceData = ref<AvgPriceResponse['data']>()
 const wearData = ref<SkinWearDetailResponse | null>(null)
@@ -181,7 +191,6 @@ const loading = ref(false)
 const loadingWear = ref(false)
 const error = ref<string | null>(null)
 const itemDetail: any = ref(null)
-
 const itemimg = computed(() => {
     if (itemDetail.value && itemDetail.value.imageUrl) {
         return itemDetail.value.imageUrl;
@@ -189,19 +198,35 @@ const itemimg = computed(() => {
     return '';
 });
 
-// 在组件挂载时加载数据
-onMounted(async () => {
-    try {
-        skinData.value = await api.loadLocalSkinData()
-    } catch (err) {
-        console.error('加载饰品数据失败，使用示例数据:', err)
-        skinData.value = api.getSampleSkinData()
-        error.value = '本地数据加载失败，已使用示例数据'
-    }
-})
+const apikey = ref(localStorage.getItem("apiKey") || "");
+//处理标题点击
+const handlebackclick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    //跳转回主界面并清除搜索缓存
+    selectedSkin.value = null;
+    itemsStore.clearSelectedSkin();
+    console.log("已清除selectedSkin:", selectedSkin.value);
+};
 
+//apiKey的处理函数
+const handleApiKeySave = () => {
+    itemsStore.setApiKey(apikey.value);
+    console.log("已保存apiKey:", apikey.value);
+};
+
+const handleApiKeyClear = () => {
+    itemsStore.clearApiKey();
+    apikey.value = "";
+    console.log("已清除apiKey");
+};
 // 处理饰品选择
 const handleSkinSelect = async (skin: any) => {
+    //先更新缓存
+    if (skin != JSON.parse(localStorage.getItem("selectedSkin")!)) {
+        itemsStore.setSelectedSkin(skin);
+        console.log("更新缓存中的selectedSkin:", skin);
+    }
+    //基础数据的定义
     selectedSkin.value = skin
     priceData.value = undefined
     avgPriceData.value = undefined
@@ -268,7 +293,6 @@ const handleViewItem = async (marketHashName: string) => {
     }
 }
 
-
 const formatPrice = (price: number) => {
     if (price >= 1000000) {
         return (price / 1000000).toFixed(2) + 'M'
@@ -281,6 +305,24 @@ const formatPrice = (price: number) => {
     }
     return price.toFixed(2)
 }
+
+// 在组件挂载时加载数据
+onMounted(async () => {
+    try {
+        skinData.value = await api.loadLocalSkinData()
+        // 从本地存储加载上次选择的饰品
+        if (localStorage.getItem("selectedSkin")) {
+            selectedSkin.value = JSON.parse(localStorage.getItem("selectedSkin")!);
+            console.log("selectedSkin:", selectedSkin.value);
+            handleSkinSelect(selectedSkin.value);
+        }
+
+    } catch (err) {
+        console.error('加载饰品数据失败，使用示例数据:', err)
+        skinData.value = api.getSampleSkinData()
+        error.value = '本地数据加载失败，已使用示例数据'
+    }
+})
 </script>
 
 <style scoped>
@@ -349,15 +391,16 @@ const formatPrice = (price: number) => {
 .selected-left {
     display: flex;
     flex-direction: column;
-    align-items:center;
-    justify-content:center;
-    justify-content: space-between; 
+    align-items: center;
+    justify-content: center;
+    justify-content: space-between;
     min-width: 320px;
     flex-shrink: 0;
-    min-height: 400px; 
+    min-height: 400px;
 }
+
 /* 信息 */
-.select-info{
+.select-info {
     background: white;
     border-radius: 16px;
     padding: 24px;
@@ -366,6 +409,7 @@ const formatPrice = (price: number) => {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     border: 1px solid #e5e7eb;
 }
+
 .selected-image {
     position: relative;
     width: 300px;
